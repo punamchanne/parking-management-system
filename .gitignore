@@ -12,8 +12,9 @@ venv/
 env/
 .venv/
 .pytest_cache/
-*.model
-*.pt
+# Allow models
+# *.model
+# *.pt
 
 # IDE / System
 .vscode/
