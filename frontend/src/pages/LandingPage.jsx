@@ -24,12 +24,10 @@ const LandingPage = () => {
                         Automate your parking space with real-time vehicle detection, automated tracking, and instant violation alerts using state-of-the-art YOLOv8 AI.
                     </p>
                     <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <Link to="/signup" className="btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            Get Started Now <ArrowRight size={20} />
+                        <Link to="/login" className="btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            Admin Login <ArrowRight size={20} />
                         </Link>
-                        <Link to="/login" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '0.75rem', border: '1px solid var(--glass-border)', color: 'white', textDecoration: 'none', background: 'var(--glass)', transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            Admin Login
-                        </Link>
+
                     </div>
                 </motion.div>
             </section>
@@ -68,7 +66,7 @@ const LandingPage = () => {
                 <div className="glass-card" style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
                     <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>Ready to Secure Your Space?</h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem', maxWidth: '600px', margin: '0 auto 3rem' }}>Join the future of parking management systems with our AI-powered solution.</p>
-                    <Link to="/register" className="btn-primary" style={{ padding: '1rem 3rem', fontSize: '1.2rem' }}>Sign Up for Free</Link>
+                    <Link to="/login" className="btn-primary" style={{ padding: '1rem 3rem', fontSize: '1.2rem' }}>Proceed to Login</Link>
                 </div>
             </section>
         </div>

@@ -10,7 +10,6 @@ import UserRegistration from './pages/UserRegistration';
 import UserViolations from './pages/UserViolations';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
 import ParkingSlots from './pages/ParkingSlots';
 
 function App() {
@@ -24,10 +23,8 @@ function App() {
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/user-dashboard" element={<UserDashboard />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
             <Route path="/monitoring" element={<LiveMonitoring />} />
             <Route path="/logs" element={<VehicleLog />} />
-            <Route path="/register-vehicle" element={<UserRegistration />} />
             <Route path="/user-status" element={<UserViolations />} />
             <Route path="/parking-slots" element={<ParkingSlots />} />
           </Routes>

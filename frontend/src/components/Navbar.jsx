@@ -8,7 +8,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
-    const isLanding = ['/', '/login', '/signup'].includes(location.pathname);
+    const isLanding = ['/', '/login'].includes(location.pathname);
     const isAdmin = location.pathname.includes('admin') || location.pathname === '/monitoring' || location.pathname === '/logs' || location.pathname === '/parking-slots';
 
     const handleLogout = () => {
@@ -27,7 +27,7 @@ const Navbar = () => {
         { to: "/user-dashboard", icon: LayoutDashboard, label: "Dashboard", show: !isLanding && !isAdmin },
         { to: "/user-status", icon: FileSearch, label: "Fines", show: !isLanding && !isAdmin },
         { to: "/parking-slots", icon: LayoutGrid, label: "Slots", show: !isLanding },
-        { to: "/register-vehicle", icon: UserPlus, label: "Register", show: !isLanding && !isAdmin },
+
     ];
 
     return (
@@ -61,7 +61,7 @@ const Navbar = () => {
                         </button>
                     ) : (
                         <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <NavLink to="/signup" className="nav-link"><UserCircle size={16}/> Sign Up</NavLink>
+
                             <Link to="/login" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Login</Link>
                         </div>
                     )}
