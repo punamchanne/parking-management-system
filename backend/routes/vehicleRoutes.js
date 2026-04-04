@@ -4,6 +4,7 @@ const router = express.Router();
 const Vehicle = require('../models/Vehicle');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+const stringSimilarity = require('string-similarity');
 
 // POST /api/update - AI sends data here
 router.post('/update', async (req, res) => {
@@ -13,6 +14,21 @@ router.post('/update', async (req, res) => {
     // Clean and validate vehicle number
     let cleanPlate = vehicle_number ? String(vehicle_number).replace(/[^A-Z0-9]/gi, '').toUpperCase() : "UNKNOWN";
     if (cleanPlate === "NONE" || cleanPlate === "NULL" || cleanPlate === "") cleanPlate = "UNKNOWN";
+
+    // SMART FUZZY MATCHING LOGIC
+    if (cleanPlate !== "UNKNOWN") {
+      const allUsers = await User.find({}, 'vehicle_number');
+      const registeredPlates = allUsers.map(u => u.vehicle_number);
+      
+      if (registeredPlates.length > 0) {
+        const matches = stringSimilarity.findBestMatch(cleanPlate, registeredPlates);
+        // If similarity is > 75%, assume it's the registered vehicle
+        if (matches.bestMatch.rating > 0.75) {
+          console.log(`>>> [SMART MATCH] Corrected ${cleanPlate} to ${matches.bestMatch.target} (Score: ${matches.bestMatch.rating})`);
+          cleanPlate = matches.bestMatch.target;
+        }
+      }
+    }
 
     const CAPACITY_LIMIT = 10;
     let status = reqStatus || 'normal';

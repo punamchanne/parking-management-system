@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Camera, RefreshCw, Maximize, Settings, Play, StopCircle, Activity, ShieldCheck, Zap } from 'lucide-react';
+import axios from 'axios';
+import { Camera, RefreshCw, Play, StopCircle, Activity, ShieldCheck, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LiveMonitoring = () => {
@@ -8,6 +9,7 @@ const LiveMonitoring = () => {
     const [isActive, setIsActive] = useState(false);
     const [status, setStatus] = useState('Standby');
     const [streamError, setStreamError] = useState(false);
+    const [camIndex, setCamIndex] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -16,15 +18,33 @@ const LiveMonitoring = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleRequestPermission = async () => {
+        setIsActive(true);
+        setStreamError(false);
+        setStatus('Connecting...');
+        setTimeout(() => setStatus('System Active'), 1500);
+    };
+
     const handleToggleSurveillance = () => {
         if (!isActive) {
-            setIsActive(true);
-            setStatus('Connecting...');
-            setStreamError(false);
-            setTimeout(() => setStatus('System Active'), 1500);
+            handleRequestPermission();
         } else {
             setIsActive(false);
             setStatus('Standby');
+        }
+    };
+
+    const handleSwitchCamera = async () => {
+        const nextIndex = camIndex === 0 ? 1 : 0;
+        try {
+            // Signal python server to switch index
+            await axios.post('http://localhost:8000/switch_camera', { index: nextIndex });
+            setCamIndex(nextIndex);
+            // Quick reset of the stream component to trigger refresh
+            setIsActive(false);
+            setTimeout(() => setIsActive(true), 300);
+        } catch (err) {
+            console.error("Failed to signal camera switch to backend", err);
         }
     };
 
@@ -38,36 +58,47 @@ const LiveMonitoring = () => {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', color: isActive ? '#22c55e' : '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isActive ? '#22c55e' : '#94a3b8', animation: isActive ? 'pulse 1.5s infinite' : 'none' }}></div>
-                           {status.toUpperCase()}
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isActive ? '#22c55e' : '#94a3b8', animation: isActive ? 'pulse 1.5s infinite' : 'none' }}></div>
+                            {status.toUpperCase()}
                         </span>
                         <span style={{ fontSize: '1.2rem', fontWeight: 700 }}>{currentTime}</span>
                     </div>
-                    <button 
-                        onClick={handleToggleSurveillance}
-                        className="btn-primary" 
-                        style={{ background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'linear-gradient(135deg, #6366f1, #a855f7)', border: isActive ? '1px solid #ef4444' : 'none', color: isActive ? '#ef4444' : 'white', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', fontSize: '1.1rem', transition: '0.3s' }}
-                    >
-                        {isActive ? (
-                            <><StopCircle size={22} /> Stop</>
-                        ) : (
-                            <><Play size={22} fill="currentColor" /> Start AI Feed</>
-                        )}
-                    </button>
+
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button
+                            onClick={handleSwitchCamera}
+                            className="btn-primary"
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 1.5rem' }}
+                        >
+                            <Video size={18} /> Switch Cam ({camIndex === 0 ? 'USB' : 'Webcam'})
+                        </button>
+
+                        <button
+                            onClick={handleToggleSurveillance}
+                            className="btn-primary"
+                            style={{ background: isActive ? 'rgba(239, 68, 68, 0.15)' : 'linear-gradient(135deg, #6366f1, #a855f7)', border: isActive ? '1px solid #ef4444' : 'none', color: isActive ? '#ef4444' : 'white', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2rem', fontSize: '1.1rem', transition: '0.3s' }}
+                        >
+                            {isActive ? (
+                                <><StopCircle size={22} /> Stop</>
+                            ) : (
+                                <><Play size={22} fill="currentColor" /> Start AI Feed</>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </header>
 
             <div className="admin-grid" style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem' }}>
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="glass-card" 
+                    className="glass-card"
                     style={{ height: 'min(650px, 60vh)', background: '#000', position: 'relative', overflow: 'hidden', padding: 0, border: isActive ? '2px solid var(--primary)' : '1px solid var(--glass-border)' }}>
-                    
+
                     {/* Camera Overlay */}
                     <div style={{ position: 'absolute', top: '30px', left: '30px', display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 10 }}>
                         <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.5rem 1.25rem', borderRadius: '0.75rem', color: '#fff', fontSize: '0.9rem', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
-                           CAM_01 | G-BLOCK MAIN | {isActive ? 'FEED_LIVE' : 'STANDBY'}
+                            CAM_0{camIndex + 1} | G-BLOCK MAIN | {isActive ? 'FEED_LIVE' : 'STANDBY'}
                         </div>
                     </div>
 
@@ -75,7 +106,7 @@ const LiveMonitoring = () => {
                     <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <AnimatePresence mode="wait">
                             {!isActive ? (
-                                <motion.div 
+                                <motion.div
                                     key="standby"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -86,16 +117,16 @@ const LiveMonitoring = () => {
                                     <p style={{ color: 'rgba(255,255,255,0.1)' }}>Ensure Terminal 3 (python stream_server.py) is running</p>
                                 </motion.div>
                             ) : (
-                                <motion.div 
+                                <motion.div
                                     key="active"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     style={{ width: '100%', height: '100%', position: 'relative' }}>
-                                    
+
                                     {/* Real MJPEG Stream from Python Flask Server */}
-                                    <img 
-                                        src="http://localhost:8000/video_feed" 
-                                        alt="AI Surveillance Feed" 
+                                    <img
+                                        src={`http://localhost:8000/video_feed?cam=${camIndex}`}
+                                        alt="AI Surveillance Feed"
                                         onError={() => setStreamError(true)}
                                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                     />
@@ -157,3 +188,5 @@ const LiveMonitoring = () => {
 };
 
 export default LiveMonitoring;
+
+

@@ -7,7 +7,7 @@ import datetime
 import time
 import re
 import threading
-from flask import Flask, Response, stream_with_context
+from flask import Flask, Response, stream_with_context, request
 from flask_cors import CORS
 from ultralytics import YOLO
 from tracker import Sort
@@ -32,6 +32,15 @@ logged_violations = set()
 last_plate_info = {} 
 ocr_processing = set() 
 frame_count = 0
+active_camera_index = 0 # Default 0 (Main Camera)
+
+@app.route('/switch_camera', methods=['POST'])
+def switch_camera():
+    global active_camera_index
+    idx = int(request.json.get('index', 0))
+    active_camera_index = idx
+    print(f">>> [CAM SWITCH] Switching to Index: {active_camera_index}")
+    return {"status": "success", "index": active_camera_index}
 
 def clean_plate_text(text):
     if not text: return None
@@ -73,18 +82,31 @@ def send_update_to_backend(plate_number, status='normal', fine=0, duration=0):
         print(f">>> [API FAIL] {e}")
 
 def generate_frames():
-    global frame_count
-    cap = cv2.VideoCapture(0)
+    global frame_count, active_camera_index
+    current_index = active_camera_index
+    cap = cv2.VideoCapture(current_index)
     
     while True:
+        # Check if camera has been switched via API
+        if current_index != active_camera_index:
+            print(f">>> [STREAM] Re-initializing Camera to Index: {active_camera_index}")
+            cap.release()
+            current_index = active_camera_index
+            cap = cv2.VideoCapture(current_index)
+
         success, frame = cap.read()
-        if not success: break
+        if not success:
+            print(f">>> [STREAM] Frame read failed for index {current_index}. Retrying...")
+            cap.release()
+            time.sleep(1)
+            cap = cv2.VideoCapture(current_index)
+            continue
         
         frame_count += 1
         h, w = frame.shape[:2]
         
         # High Frequency Detection for Mobile Testing
-        results = model(frame, conf=0.1, verbose=False, device='cpu', imgsz=320)
+        results = model(frame, conf=0.1, verbose=False, device='cpu', imgsz=640)
         detections = []
         for r in results:
             for box in r.boxes:
