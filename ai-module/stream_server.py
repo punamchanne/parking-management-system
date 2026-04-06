@@ -85,30 +85,45 @@ def generate_frames():
     global frame_count, active_camera_index
     current_index = active_camera_index
     
-    # Use DirectShow for better external camera support on Windows
-    cap = cv2.VideoCapture(current_index, cv2.CAP_DSHOW)
-    
-    # Try to set a standard resolution for better compatibility
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    def get_capture(idx):
+        # Try DSHOW first for Windows compatibility
+        c = cv2.VideoCapture(idx, cv2.CAP_DSHOW)
+        if not c.isOpened():
+            c = cv2.VideoCapture(idx) # Fallback to default
+        return c
+
+    cap = get_capture(current_index)
     
     while True:
-        # Check if camera has been switched via API
         if current_index != active_camera_index:
             print(f">>> [STREAM] Switching to Index: {active_camera_index}")
             cap.release()
             current_index = active_camera_index
-            cap = cv2.VideoCapture(current_index, cv2.CAP_DSHOW)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            cap = get_capture(current_index)
 
         success, frame = cap.read()
         if not success:
-            # If failed, try common fallback (default backend)
-            print(f">>> [STREAM] Failed index {current_index}. Retrying with fallback...")
+            print(f">>> [STREAM] Failed index {current_index}. Scanning for any available camera...")
             cap.release()
-            time.sleep(2) # Give hardware time to reset
-            cap = cv2.VideoCapture(current_index) # Fallback to default
+            
+            # Smart Auto-Scan: Try to find ANY working camera (0, 1, 2)
+            found = False
+            for test_idx in [0, 1, 2]:
+                temp_cap = get_capture(test_idx)
+                if temp_cap.isOpened():
+                    s, _ = temp_cap.read()
+                    if s:
+                        print(f">>> [STREAM] Found working camera at Index: {test_idx}")
+                        cap = temp_cap
+                        current_index = test_idx
+                        active_camera_index = test_idx
+                        found = True
+                        break
+                temp_cap.release()
+            
+            if not found:
+                time.sleep(2)
+                cap = get_capture(current_index)
             continue
         
         frame_count += 1
