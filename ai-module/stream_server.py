@@ -84,22 +84,31 @@ def send_update_to_backend(plate_number, status='normal', fine=0, duration=0):
 def generate_frames():
     global frame_count, active_camera_index
     current_index = active_camera_index
-    cap = cv2.VideoCapture(current_index)
+    
+    # Use DirectShow for better external camera support on Windows
+    cap = cv2.VideoCapture(current_index, cv2.CAP_DSHOW)
+    
+    # Try to set a standard resolution for better compatibility
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     
     while True:
         # Check if camera has been switched via API
         if current_index != active_camera_index:
-            print(f">>> [STREAM] Re-initializing Camera to Index: {active_camera_index}")
+            print(f">>> [STREAM] Switching to Index: {active_camera_index}")
             cap.release()
             current_index = active_camera_index
-            cap = cv2.VideoCapture(current_index)
+            cap = cv2.VideoCapture(current_index, cv2.CAP_DSHOW)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
         success, frame = cap.read()
         if not success:
-            print(f">>> [STREAM] Frame read failed for index {current_index}. Retrying...")
+            # If failed, try common fallback (default backend)
+            print(f">>> [STREAM] Failed index {current_index}. Retrying with fallback...")
             cap.release()
-            time.sleep(1)
-            cap = cv2.VideoCapture(current_index)
+            time.sleep(2) # Give hardware time to reset
+            cap = cv2.VideoCapture(current_index) # Fallback to default
             continue
         
         frame_count += 1
