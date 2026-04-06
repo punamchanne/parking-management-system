@@ -139,13 +139,13 @@ def generate_frames():
                 logged_entries.add(track_id)
                 send_update_to_backend(plate_text, status='normal', duration=elapsed)
 
-            if elapsed >= 30 and track_id not in logged_violations:
+            if elapsed >= 15 and track_id not in logged_violations:
                 logged_violations.add(track_id)
                 send_update_to_backend(plate_text, status='violation', fine=500, duration=elapsed)
 
             # Colors and Status HUD
             color = (0, 255, 0) # Green
-            if elapsed >= 30: color = (0, 0, 255) # Red
+            if elapsed >= 15: color = (0, 0, 255) # Red
             elif elapsed >= 5: color = (255, 120, 0) # Blue-Cyan
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3)
@@ -156,7 +156,7 @@ def generate_frames():
             cv2.putText(frame, overlay_txt, (x1 + 5, y1 - 5), 0, 0.5, (255, 255, 255), 2)
             
             # Progress Countdown
-            prog = min(elapsed / 30.0, 1.0)
+            prog = min(elapsed / 15.0, 1.0)
             cv2.rectangle(frame, (x1, y2 + 5), (x1 + int(prog * (x2 - x1)), y2 + 15), color, -1)
 
         # Main Overlay
