@@ -1,7 +1,6 @@
-
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://parking-management-system-sye4.onrender.com/api';
 
 export const getStats = async () => {
     const response = await axios.get(`${API_BASE_URL}/stats`);
